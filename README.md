@@ -4,7 +4,6 @@ This repository is a HTTP server written in pure C it is only meant for my own l
 # Building
 ```
 gcc main.c -o server
-
 ```
 
 # TODO
