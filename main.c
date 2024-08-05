@@ -6,30 +6,35 @@
 #include <netinet/in.h>
 #include <string.h>
 
+// local includes
+#include "files.h"
+#include "header.h"
+#include "parser.h"
+
 #define PORT 8088
 int main(int argc, char const *argv[])
 {
     int server_fd, new_socket; long valread;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
-    
+
     char *hello = "Hello from server";
-    
+
     // Creating socket file descriptor
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
         perror("In socket");
         exit(EXIT_FAILURE);
     }
-    
+
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons( PORT );
-    
+
     memset(address.sin_zero, '\0', sizeof address.sin_zero);
-    
-    
+
+
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0)
     {
         perror("In bind");
@@ -48,11 +53,11 @@ int main(int argc, char const *argv[])
             perror("In accept");
             exit(EXIT_FAILURE);
         }
-        
+
         char buffer[30000] = {0};
         valread = read( new_socket , buffer, 30000);
         printf("%s\n",buffer );
-
+        printf("parse function: %d\n", parseReqType(buffer));
 	// implement GET request
 	if (strncmp( buffer, "GET", 3 ) == 0) {
 		// get the uri to then send the correct file
@@ -61,12 +66,12 @@ int main(int argc, char const *argv[])
 			if ( buffer[5] != ' ') {
 			 	printf("Not implemented yet!");
 				close(new_socket);
-				return 0;	
+				return 0;
 			}
 			// if it asks for a / we will just send it the index.html file
 			else {
 			printf("Sending index.html file");
-			char *header = 
+			char *header =
 				"HTTP/1.1 200 OK\n"
 				"Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
 				"Server: HTTPServe\n"
@@ -83,7 +88,7 @@ int main(int argc, char const *argv[])
 			char *fileBuffer;
 
 			fp = fopen("index.html", "r");
-			
+
 			fseek(fp, 0, SEEK_END);
 			file_size = ftell(fp);
 			// push file pointer back to beginning of file
@@ -96,14 +101,14 @@ int main(int argc, char const *argv[])
 			char reply[50000];
 			strcpy(reply, header);
 			strcat(reply, fileBuffer);
-			
+
 			fclose(fp);
 			free(fileBuffer);
 
 			// write to socket the file
 			write(new_socket, reply, strlen(reply));
 			}
-		}		
+		}
 	}
         close(new_socket);
     }
