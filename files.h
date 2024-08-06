@@ -1,26 +1,21 @@
 // this file is for functions containing code that deals with the serving of files for the web server such as extracting the URI of the resource
 #include <stdio.h>
 #include <string.h>
+#include "parser.h"
 
-char* getFilename(char *buffer) {
-	char *err = "Error";
-	// check to make sure request is valid before continuing
-	if (buffer[4] != '/') {
-		printf("Not a correct request dropping");
-		return err;
-	}
-
-	// do an initial loop to find the size of the uri to get good size of char array
-	for (int i = 5; i < strlen(buffer); i++) {
-		if (buffer[i] == ' ') {
-			break;
-		}
-		char fileName[i];
-        }
+// return the filename without the first slash
+const char* getFilename(char *uri) {
+    char fileName[sizeof(uri) + 1];
+    int j = 0;
+    // set i to 1 to skip the first /
+    for (int i = 1; i < strlen(uri) + 1; i++) {
+        fileName[j] = uri[i];
+        j++;
+    }
+    return fileName;
 }
 
-// returns a buffer
-const char* readFile(char fileName[]) {
+int getFilesize(char fileName[]) {
 	// check file size before allocating memory
 	FILE *fp;
 	long file_size;
@@ -32,9 +27,19 @@ const char* readFile(char fileName[]) {
 	file_size = ftell(fp);
 	// push file pointer back to beginning of file
 	rewind(fp);
+    fclose(fp);
 
-	fileBuffer = (char*) malloc(file_size + 1);
-
-    return fileBuffer;
+    return file_size;
 }
 
+// check if file exists otherwise send 404
+int validateFile(char fileName[]){
+    FILE *file;
+    // if exists
+    if ((file = fopen(fileName, "r"))) {
+        fclose(file);
+        return 1;
+    }
+    // if not exists
+    return 0;
+}

@@ -6,11 +6,6 @@
 #include <netinet/in.h>
 #include <string.h>
 
-// local includes
-#include "files.h"
-#include "header.h"
-#include "parser.h"
-
 #define PORT 8088
 int main(int argc, char const *argv[])
 {
@@ -57,7 +52,6 @@ int main(int argc, char const *argv[])
         char buffer[30000] = {0};
         valread = read( new_socket , buffer, 30000);
         printf("%s\n",buffer );
-        printf("parse function: %d\n", parseReqType(buffer));
 	// implement GET request
 	if (strncmp( buffer, "GET", 3 ) == 0) {
 		// get the uri to then send the correct file
@@ -74,7 +68,7 @@ int main(int argc, char const *argv[])
 			char *header =
 				"HTTP/1.1 200 OK\n"
 				"Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
-				"Server: HTTPServe\n"
+				"Server: CHTTP\n"
 				"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
 				"ETag: \"56d-9989200-1132c580\"\n"
 				"Content-Type: text/html\n"
@@ -104,6 +98,7 @@ int main(int argc, char const *argv[])
 
 			fclose(fp);
 			free(fileBuffer);
+
 
 			// write to socket the file
 			write(new_socket, reply, strlen(reply));

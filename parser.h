@@ -49,8 +49,21 @@ int parseReqType(char *requestBuff) {
     else if(strcmp(tokenBuff, "PATCH") == 0) {
         return 8;
     }
-    // if anything else not a valid request return -1
+    // if anything else: not a valid request return -1
     else {
         return -1;
     }
+}
+
+const char* parseUri(char *reqBuff) {
+    char* tokenBuff;
+
+    // get first token
+    tokenBuff = strtok(reqBuff, " ");
+
+    // get second token
+    tokenBuff = strtok(NULL, " ");
+
+    // return the uri
+    return tokenBuff;
 }
