@@ -1,21 +1,21 @@
 // this file is for functions containing code that deals with the serving of files for the web server such as extracting the URI of the resource
 #include <stdio.h>
 #include <string.h>
-#include "parser.h"
 
 // return the filename without the first slash
-const char* getFilename(char *uri) {
-    char fileName[sizeof(uri) + 1];
+const char* getFilename(char *uri, int nameLength) {
+    char fileName[100];
     int j = 0;
     // set i to 1 to skip the first /
-    for (int i = 1; i < strlen(uri) + 1; i++) {
+    for (int i = 1; i < nameLength; i++) {
         fileName[j] = uri[i];
         j++;
     }
+    //printf("%s\n", fileName);
     return fileName;
 }
 
-int getFilesize(char fileName[]) {
+long getFilesize(char fileName[]) {
 	// check file size before allocating memory
 	FILE *fp;
 	long file_size;
