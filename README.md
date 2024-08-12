@@ -10,7 +10,7 @@ gcc main.c -lcrypto -o server
 # TODO
 This repository is a heavy WIP it currently only supports a GET request for specifically the root "/" and sends the index.html file. The code is also very ugly and will be refactored once basic functionality is reached.
 
-- [ ] Add support for multi-threading by spawning a new pthread for each incoming request.
+- [X] Add support for multi-threading by spawning a new pthread for each incoming request.
 - [ ] Support usage of HTTP status codes such as 401, 404, 501, etc.
-- [ ] Refactor the code to make it readable.
+- [X] Refactor the code to make it readable.
 - [ ] Port to CMake to make building easier.
