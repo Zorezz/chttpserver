@@ -4,18 +4,64 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 #include "requests.h"
 
+// global variables and defines
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 #define PORT 8088
+
+void * socketThread(int clientSocket) {
+    char clientMessage[2000];
+    char reply[10000];
+    int reqType;
+
+    int newSocket = clientSocket;
+    recv(newSocket, clientMessage, 2000, 0);
+    //printf("%s", clientMessage);
+    // parse the request for request type
+    //reqType = parseReqType(&clientMessage);
+    reqType = 0;
+    printf("%d", reqType);
+    // eventually change this to a switch case.
+    if (reqType == 0) {
+       // Send message to client socket
+        pthread_mutex_lock(&lock);
+        char* token = parseUri(clientMessage);
+        char fileName[200];
+        int j = 0;
+        for (int i = 1; i < (strlen(token) + 1); i++) {
+            fileName[j] = token[i];
+            j++;
+        }
+
+        if (token[1] == NULL) {
+            sendGet(clientMessage, "index.html", &reply);
+        }
+        else {
+            sendGet(clientMessage, fileName, &reply);
+        }
+        pthread_mutex_unlock(&lock);
+        send(newSocket, reply, strlen(reply), 0);
+        printf("Exit socketThread\n");
+        close(newSocket);
+    }
+    else {
+        printf("not implemented yet\n");
+    }
+}
+
 int main(int argc, char const *argv[])
 {
-    int server_fd, new_socket; long valread;
+    int server_fd, newSocket; long valread;
     struct sockaddr_in address;
-    int addrlen = sizeof(address);
+    struct sockaddr_storage serverStorage;
+    socklen_t addr_size;
+    pid_t pid[50];
 
     // Creating socket file descriptor
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    if ((server_fd = socket(PF_INET, SOCK_STREAM, 0)) == 0)
     {
         perror("In socket");
         exit(EXIT_FAILURE);
@@ -29,60 +75,37 @@ int main(int argc, char const *argv[])
     memset(address.sin_zero, '\0', sizeof address.sin_zero);
 
 
-    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0)
+    if (bind(server_fd, (struct sockaddr *) &address, sizeof(address)) < 0)
     {
         perror("In bind");
         exit(EXIT_FAILURE);
     }
-    if (listen(server_fd, 10) < 0)
-    {
-        perror("In listen");
-        exit(EXIT_FAILURE);
-    }
+    if (listen(server_fd, 50) == 0)
+        printf("Listening\n");
+    else
+        printf("Error in listen\n");
+        pthread_t tid[60];
+        int i = 0;
     while(1)
     {
-        printf("\nWaiting for new connection...\n\n");
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
-        {
-            perror("In accept");
-            exit(EXIT_FAILURE);
+        addr_size = sizeof serverStorage;
+        newSocket = accept(server_fd, (struct sockaddr *) &serverStorage, &addr_size);
+        int pid_c = 0;
+
+        if ((pid_c = fork()) == 0) {
+            printf("Creating new process");
+            socketThread(newSocket);
         }
-
-        char buffer[30000] = {0};
-        valread = read( new_socket , buffer, 30000);
-        printf("%s\n",buffer );
-	// implement GET request
-	if (strncmp( buffer, "GET", 3 ) == 0) {
-			/* char *header =
-				"HTTP/1.1 200 OK\n"
-				"Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
-				"Server: CHTTP\n"
-				"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
-				"ETag: \"56d-9989200-1132c580\"\n"
-				"Content-Type: text/html\n"
-				"Accept-Ranges: bytes\n"
-				"Connection: close\n"
-				"\n"; */
-            char reply[10000];
-            char* token = parseUri(buffer);
-            char fileName[20];
-            int j = 0;
-            for (int i = 1; i < (strlen(token) + 1); i++) {
-                fileName[j] = token[i];
-                j++;
+        else {
+            pid[i++] = pid_c;
+            if (i >= 49) {
+                i = 0;
+                while (i < 50) {
+                    waitpid(pid[i++], NULL, 0);
+                }
+                i = 0;
             }
-
-            if (token[1] == NULL) {
-                sendGet(buffer, "index.html", &reply);
-            }
-            else {
-                sendGet(buffer, fileName, &reply);
-            }
-
-
-			write(new_socket, reply, strlen(reply));
         }
-        close(new_socket);
     }
     return 0;
 }

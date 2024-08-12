@@ -16,7 +16,6 @@
     PATCH   - 8
 */
 int parseReqType(char *requestBuff) {
-    int file_size = sizeof(requestBuff);
     char* tokenBuff;
 
     tokenBuff = strtok(requestBuff, " ");
